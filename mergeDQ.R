@@ -93,6 +93,8 @@ eqcnx100adj = read.csv('eqcnx100adj.csv', as.is = T)
 eqcnx100adj = eqcnx100adj[ ,c(1:2,7,9, 14:18)]
 eqcnx100adj$Date = as.POSIXct(strptime(eqcnx100adj$Date, '%m/%d/%Y'))
 
+eqcnx100adj[eqcnx100adj$Date=='2014-01-01',9] = 
+  eqcnx100adj[eqcnx100adj$Date=='2014-01-01',7]
 
 # ---- Rank the top 5 by VWAP returns----
 require(dplyr)
