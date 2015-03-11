@@ -47,9 +47,12 @@ results = as.data.frame(results)
 
 # we want only performance of Top 5 recommendation
 intSet = results[results$testSet=='Top5', ]
-sum(intSet$testSet == intSet$pred.lda)/NROW(intSet)
-sum(intSet$testSet == intSet$pred.lda2)/NROW(intSet)
-sum(intSet$testSet == intSet$pred.qda)/NROW(intSet)
-sum(intSet$testSet == intSet$pred.nnet)/NROW(intSet)
+accuracy = 100* c(sum(intSet$testSet == intSet$pred.lda)/NROW(intSet),
+             sum(intSet$testSet == intSet$pred.lda2)/NROW(intSet),
+             sum(intSet$testSet == intSet$pred.qda)/NROW(intSet),
+             sum(intSet$testSet == intSet$pred.nnet)/NROW(intSet))
+accuracy = as.data.frame(accuracy)
+accuracy$model = c('lda', 'lda2', 'qda', 'nnet')
 
-
+ggplot(accuracy, aes(x = model, y = accuracy)) + 
+  geom_bar(stat = 'identity', fill = 'cyan4')
