@@ -5,6 +5,26 @@ require(caret)
 trainSet = eqcnx100adj[1:24400, -10]
 testSet = eqcnx100adj[24401:29000, -10]
 
+# ---- Little EDA before the plunge ----
+summary(eqcnx100adj)
+ggplot(eqcnx100adj, aes(x = 1, y = VWAP, col = Top5)) + geom_boxplot()
+ggplot(eqcnx100adj, aes(x = 1, y = DQShare, col = Top5)) + geom_boxplot()
+ggplot(eqcnx100adj, aes(x = 1, y = TradeSize, col = Top5)) + geom_boxplot()
+ggplot(eqcnx100adj, aes(x = 1, y = VWAPReturn, col = Top5)) + geom_boxplot()
+ggplot(eqcnx100adj, aes(x = 1, y = Returns, col = Top5)) + geom_boxplot()
+
+boxplot(eqcnx100adj$VWAP)
+boxplot(eqcnx100adj$DQShare)
+boxplot(eqcnx100adj$TradeSize)
+boxplot(eqcnx100adj$VWAPReturn)
+boxplot(eqcnx100adj$Returns)
+
+
+x = eqcnx100adj %>%
+  #select(DQShare:VWAPReturn, Top5) %>%
+  tidyr::gather(key = Feature, value = Top5)
+
+
 
 # ---- Fit classifiers, as many as possible ----
 rfModel = randomForest(x = trainSet[ ,-10], y = trainSet[ ,10])
