@@ -4,6 +4,9 @@
 nseEqPicker.Rproj
 *.csv
 *.xlsb
+*.xlsx
+*.xls
 *.jpg
 packrat/lib*/
 Model_performance_cache/
+r_linear_x64/
