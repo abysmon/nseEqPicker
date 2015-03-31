@@ -1,16 +1,18 @@
 # ---- Deliverable quantity 2014-15 ----
-url = 'http://www.nseindia.com/archives/equities/mto/MTO_04032015.DAT'
+# url = 'http://www.nseindia.com/archives/equities/mto/MTO_04032015.DAT'
 
 datadir = 'D:/dataset/NSE Delivery Quantity/'
-dqfile = list.files(datadir, full.names = T, pattern = '^MTO')
+dqfile = c(list.files(paste0(datadir, '2014'), full.names = T, pattern = '^MTO'), 
+           list.files(paste0(datadir, '2015'), full.names = T, pattern = '^MTO'))
 
 readDAT = function(filedat){
-  data = read.csv(filedat, header = F, as.is = T, skip = 4)[ ,-c(1:2)]
-  data$DATE = substr(filedat, start = 49-12+1, stop = 49-4)
+  data = read.csv(filedat, header = F, as.is = T, skip = 4, 
+                  na.strings = "zzzz")[ ,-c(1:2)]
+  data$DATE = substr(filedat, start = nchar(filedat)-12+1, stop = nchar(filedat)-4)
   return(data)
 }
 
-dqdata = do.call(rbind, lapply(dqdata, readDAT))
+dqdata = do.call(rbind, lapply(dqfile, readDAT))
 colnames(dqdata)[-6] = c('TICKER', 'TYPE', 'TradedQ', 'DeliveryQ', 'DQ/TQ')
 
 dqdata$TradedQ = as.numeric(dqdata$TradedQ)
@@ -41,6 +43,9 @@ nse2015 = nse2015[, -c(13,14)]
 
 nse2014$TIMESTAMP = as.POSIXct(strptime(nse2014$TIMESTAMP, '%d-%b-%Y'))
 nse2015$TIMESTAMP = as.POSIXct(strptime(nse2015$TIMESTAMP, '%d-%b-%Y'))
+
+nse = rbind(nse2014, nse2015)
+write.csv(nse, file = 'nse2014-15.csv', row.names = F)
 
 nse2014.cnx100 = nse2014[ nse2014$SYMBOL %in% cnx100$Symbol, ]
 nse2014.cnx100 = nse2014.cnx100[ nse2014.cnx100$SERIES == 'EQ', ]
@@ -77,13 +82,16 @@ write.csv(dq.cnx100, file = 'dq.cnx100.csv', row.names = F)
 
 # ---- price, vol, delivery for CNX100 ----
 eqcnx100 = cbind(nse.cnx100, dq.cnx100$DeliveryQ)
-eqcnx100 = eqcnx100[,c(11, 1:10, 12:13)]
+eqcnx100 = eqcnx100[ ,c(11, 1:10, 12:13)]
 colnames(eqcnx100) = c("Date","Ticker","Series","Open","High","Low","Close",
                        "Last","PrevClose","TradedQuantity","TradedValue",
                        "TotalTrades","DeliveryQuantity")
 
 eqcnx100$VWAP = eqcnx100$TradedValue/eqcnx100$TradedQuantity
 eqcnx100$DQShare = eqcnx100$DeliveryQuantity/eqcnx100$TradedQuantity*100
+eqcnx100$Returns = (eqcnx100$Close/eqcnx100$PrevClose-1)*100
+eqcnx100$TradeSize = eqcnx100$TradedQuantity/eqcnx100$TotalTrades
+eqcnx100$VWAPReturns = diff(log(eqcnx100$VWAP))*100
 
 write.csv(eqcnx100, file = 'eqcnx100.csv', row.names = F)
 
@@ -99,9 +107,43 @@ eqcnx100adj[eqcnx100adj$Date=='2014-01-01',9] =
 # ---- Rank the top 5 by VWAP returns----
 require(dplyr)
 
-Threshold = 5
-eqcnx100adj = group_by(eqcnx100adj, Date)
-eqcnx100adj = arrange(eqcnx100adj, Date, desc(VWAPReturn), Ticker)
+Threshold = 10
+# eqcnx100adj = group_by(eqcnx100adj, Date)
+# eqcnx100adj = arrange(eqcnx100adj, Date, desc(VWAPReturn), Ticker)
+eqcnx100adj = eqcnx100adj[order(eqcnx100adj$Date, -eqcnx100adj$VWAPReturn, 
+                                eqcnx100adj$Ticker), ]
 eqcnx100adj$Rank = 101-ave(eqcnx100adj$VWAPReturn, eqcnx100adj$Date, FUN = rank)
-eqcnx100adj$Top5 = ifelse(eqcnx100adj$Rank<(Threshold+1),"Top5","nonTop5")
+eqcnx100adj$TopPick = ifelse(eqcnx100adj$Rank<(Threshold+1),"Top","Others")
+
+
+# ---- Add new data ----
+# DQ portion
+readDAT = function(filedat){
+  data = read.csv(filedat, header = F, as.is = T, skip = 4)[ ,-c(1:2)]
+  data$DATE = substr(filedat, start = nchar(filedat)-12+1, stop = nchar(filedat)-4)
+  return(data)
+}
+
+datadir = 'D:/dataset/newdata/'
+dqfile = list.files(datadir, full.names = T, pattern = '^MTO')
+
+dqdata = do.call(rbind, lapply(dqfile, readDAT))
+colnames(dqdata)[-6] = c('TICKER', 'TYPE', 'TradedQ', 'DeliveryQ', 'DQ/TQ')
+# dqdata$TradedQ = as.integer(dqdata$TradedQ)
+# dqdata$DeliveryQ = as.integer(dqdata$DeliveryQ)
+
+# Bhavcopy portion
+csvlist = list.files(datadir, '*.csv', full.names = T)
+nsenew = do.call(rbind, lapply(csvlist, function(f){ read.csv(f, as.is = T)}))
+nsenew = nsenew[, -c(13,14)]
+
+# merge them
+dqdata = dqdata[ dqdata$TYPE == 'EQ', ]
+nsenew = nsenew[ nsenew$SERIES == 'EQ', ]
+
+write.csv(dqdata, file = 'dqdata.csv', row.names = F)
+write.csv(nsenew, file = 'nsenew.csv', row.names = F)
+
+all.equal(dqdata$TradedQ, nsenew$TOTTRDQTY)
+bcdq.new = cbind(nsenew, nsenew$DeliveryQ)
 

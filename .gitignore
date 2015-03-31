@@ -1,6 +1,9 @@
 .Rproj.user
 .Rhistory
-.RData
+*.RData
 nseEqPicker.Rproj
 *.csv
 *.xlsb
+*.jpg
+packrat/lib*/
+Model_performance_cache/

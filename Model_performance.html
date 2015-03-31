@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8">
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="author" content="Kay Dee" />
+
+
+<title>Model performance</title>
+
+<script src="Model_performance_files/jquery-1.11.0/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="Model_performance_files/bootstrap-3.3.1/css/united.min.css" rel="stylesheet" />
+<script src="Model_performance_files/bootstrap-3.3.1/js/bootstrap.min.js"></script>
+<script src="Model_performance_files/bootstrap-3.3.1/shim/html5shiv.min.js"></script>
+<script src="Model_performance_files/bootstrap-3.3.1/shim/respond.min.js"></script>
+
+
+<style type="text/css">code{white-space: pre;}</style>
+<style type="text/css">
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; background-color: #2a211c; color: #bdae9d; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; background-color: #2a211c; color: #bdae9d; border-right: 1px solid #bdae9d; }
+td.sourceCode { padding-left: 5px; }
+pre, code { color: #bdae9d; background-color: #2a211c; }
+code > span.kw { color: #43a8ed; font-weight: bold; }
+code > span.dt { text-decoration: underline; }
+code > span.dv { color: #44aa43; }
+code > span.bn { color: #44aa43; }
+code > span.fl { color: #44aa43; }
+code > span.ch { color: #049b0a; }
+code > span.st { color: #049b0a; }
+code > span.co { color: #0066ff; font-style: italic; }
+code > span.al { color: #ffff00; }
+code > span.fu { color: #ff9358; font-weight: bold; }
+code > span.er { font-weight: bold; }
+</style>
+<style type="text/css">
+  pre:not([class]) {
+    background-color: white;
+  }
+</style>
+
+
+
+</head>
+
+<body>
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+code {
+  color: inherit;
+  background-color: rgba(0, 0, 0, 0.04);
+}
+img { 
+  max-width:100%; 
+  height: auto; 
+}
+</style>
+<div class="container-fluid main-container">
+
+
+<div id="header">
+<h1 class="title">Model performance</h1>
+<h4 class="author"><em>Kay Dee</em></h4>
+<h4 class="date"><em>Wednesday, March 11, 2015</em></h4>
+</div>
+
+<div id="TOC">
+<ul>
+<li><a href="#loading-the-data">Loading the data:</a></li>
+<li><a href="#performance-of-the-models">Performance of the models:</a></li>
+</ul>
+</div>
+
+<hr />
+<div id="loading-the-data" class="section level3">
+<h3>Loading the data:</h3>
+<pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(caret)
+<span class="kw">require</span>(dplyr)
+<span class="kw">require</span>(tidyr)
+<span class="kw">load</span>(<span class="st">&#39;input.RData&#39;</span>)
+                       
+<span class="kw">summary</span>(eqcnx100adj)</code></pre>
+<pre><code>##       Date                        Ticker              Close        
+##  Min.   :2014-01-01 00:00:00   Length:29000       Min.   :   55.1  
+##  1st Qu.:2014-04-16 00:00:00   Class :character   1st Qu.:  232.6  
+##  Median :2014-07-31 12:00:00   Mode  :character   Median :  461.7  
+##  Mean   :2014-08-03 08:21:31                      Mean   : 1037.0  
+##  3rd Qu.:2014-11-24 00:00:00                      3rd Qu.: 1079.9  
+##  Max.   :2015-03-09 00:00:00                      Max.   :27117.7  
+##    PrevClose            VWAP             DQShare           Returns        
+##  Min.   :   55.1   Min.   :   55.08   Min.   :  1.901   Min.   :-28.5600  
+##  1st Qu.:  232.2   1st Qu.:  232.92   1st Qu.: 35.574   1st Qu.: -1.0100  
+##  Median :  460.8   Median :  461.94   Median : 50.249   Median :  0.0700  
+##  Mean   : 1035.0   Mean   : 1037.71   Mean   : 49.629   Mean   :  0.1485  
+##  3rd Qu.: 1078.4   3rd Qu.: 1080.44   3rd Qu.: 63.498   3rd Qu.:  1.2300  
+##  Max.   :27117.7   Max.   :26663.56   Max.   :145.616   Max.   : 25.7500  
+##    TradeSize         VWAPReturn             Rank            Top5          
+##  Min.   :  1.866   Min.   :-23.77470   Min.   :  1.00   Length:29000      
+##  1st Qu.: 23.068   1st Qu.: -0.87232   1st Qu.: 25.75   Class :character  
+##  Median : 52.632   Median :  0.09071   Median : 50.50   Mode  :character  
+##  Mean   : 70.913   Mean   :  0.14494   Mean   : 50.50                     
+##  3rd Qu.: 94.206   3rd Qu.:  1.11004   3rd Qu.: 75.25                     
+##  Max.   :934.764   Max.   : 17.51220   Max.   :100.00</code></pre>
+<pre class="sourceCode r"><code class="sourceCode r">gridExtra::<span class="kw">grid.arrange</span>(<span class="kw">ggplot</span>(eqcnx100adj, <span class="kw">aes</span>(<span class="dt">x =</span> <span class="dv">1</span>, <span class="dt">y =</span> DQShare, <span class="dt">col =</span> Top5)) +<span class="st"> </span><span class="kw">geom_boxplot</span>(), <span class="kw">ggplot</span>(eqcnx100adj, <span class="kw">aes</span>(<span class="dt">x =</span> <span class="dv">1</span>, <span class="dt">y =</span> TradeSize, <span class="dt">col =</span> Top5)) +<span class="st"> </span><span class="kw">geom_boxplot</span>(), <span class="kw">ggplot</span>(eqcnx100adj, <span class="kw">aes</span>(<span class="dt">x =</span> <span class="dv">1</span>, <span class="dt">y =</span> VWAPReturn, <span class="dt">col =</span> Top5)) +<span class="st"> </span><span class="kw">geom_boxplot</span>(), <span class="kw">ggplot</span>(eqcnx100adj, <span class="kw">aes</span>(<span class="dt">x =</span> <span class="dv">1</span>, <span class="dt">y =</span> Returns, <span class="dt">col =</span> Top5)) +<span class="st"> </span><span class="kw">geom_boxplot</span>(), <span class="dt">nrow =</span> <span class="dv">2</span>)</code></pre>
+<p><img src="Model_performance_files/figure-html/unnamed-chunk-1-1.png" title="" alt="" width="768" /></p>
+<pre class="sourceCode r"><code class="sourceCode r">eqcnx100adj[,-<span class="kw">c</span>(<span class="dv">3</span>:<span class="dv">5</span>)] %&gt;%
+<span class="st">  </span><span class="co">#select(DQShare:VWAPReturn, Top5) %&gt;%</span>
+<span class="st">  </span><span class="kw">gather</span>(Features, Values, -<span class="kw">c</span>(Top5, Date, Ticker)) %&gt;%
+<span class="st">  </span><span class="kw">ggplot</span>(<span class="kw">aes</span>(<span class="dt">x =</span> Features, <span class="dt">y =</span> Values, <span class="dt">col =</span> Top5)) +<span class="st"> </span>
+<span class="st">  </span><span class="kw">geom_boxplot</span>() +<span class="st"> </span><span class="kw">facet_wrap</span>( ~<span class="st"> </span>Top5)</code></pre>
+<p><img src="Model_performance_files/figure-html/unnamed-chunk-1-2.png" title="" alt="" width="768" /></p>
+<hr />
+</div>
+<div id="performance-of-the-models" class="section level3">
+<h3>Performance of the models:</h3>
+<pre class="sourceCode r"><code class="sourceCode r">trainSet =<span class="st"> </span>eqcnx100adj[<span class="dv">1</span>:<span class="dv">24400</span>, -<span class="dv">10</span>]
+testSet =<span class="st"> </span>eqcnx100adj[<span class="dv">24401</span>:<span class="dv">29000</span>, -<span class="dv">10</span>]
+
+ldaModel =<span class="st"> </span><span class="kw">train</span>(<span class="kw">factor</span>(Top5) ~. -<span class="st"> </span>Date -<span class="st"> </span>Ticker , <span class="dt">data =</span> trainSet, <span class="dt">method =</span> <span class="st">&#39;lda&#39;</span>)
+pred.lda =<span class="st"> </span><span class="kw">predict</span>(ldaModel, testSet)
+
+ldaModel2 =<span class="st"> </span><span class="kw">train</span>(<span class="kw">factor</span>(Top5) ~<span class="st"> </span>DQShare +<span class="st"> </span>Returns +<span class="st"> </span>TradeSize, <span class="dt">data =</span> trainSet, <span class="dt">method =</span> <span class="st">&#39;lda&#39;</span>)
+pred.lda2 =<span class="st"> </span><span class="kw">predict</span>(ldaModel2, testSet)
+
+qdaModel =<span class="st"> </span><span class="kw">train</span>(<span class="kw">factor</span>(Top5) ~. -<span class="st"> </span>Date -<span class="st"> </span>Ticker, <span class="dt">data =</span> trainSet, <span class="dt">method =</span> <span class="st">&#39;qda&#39;</span>)
+pred.qda =<span class="st"> </span><span class="kw">predict</span>(qdaModel, testSet)
+
+nnetModel =<span class="st"> </span><span class="kw">train</span>(<span class="kw">factor</span>(Top5) ~. -<span class="st"> </span>Date -<span class="st"> </span>Ticker, <span class="dt">data =</span> trainSet, <span class="dt">method =</span> <span class="st">&#39;nnet&#39;</span>)
+pred.nnet =<span class="st"> </span><span class="kw">predict</span>(nnetModel, testSet)
+
+results =<span class="st"> </span><span class="kw">cbind</span>(testSet$Top5, <span class="kw">as.character</span>(pred.lda), <span class="kw">as.character</span>(pred.lda2),
+                <span class="kw">as.character</span>(pred.qda), <span class="kw">as.character</span>(pred.nnet))
+<span class="kw">colnames</span>(results) =<span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;testSet&#39;</span>, <span class="st">&#39;pred.lda&#39;</span>, <span class="st">&#39;pred.lda2&#39;</span>, <span class="st">&#39;pred.qda&#39;</span>, <span class="st">&#39;pred.nnet&#39;</span>)
+results =<span class="st"> </span><span class="kw">as.data.frame</span>(results)
+
+intSet =<span class="st"> </span>results[results$testSet==<span class="st">&#39;Top5&#39;</span>, ]
+accuracy =<span class="st"> </span><span class="dv">100</span>*<span class="st"> </span><span class="kw">c</span>(<span class="kw">sum</span>(intSet$testSet ==<span class="st"> </span>intSet$pred.lda)/<span class="kw">NROW</span>(intSet),
+             <span class="kw">sum</span>(intSet$testSet ==<span class="st"> </span>intSet$pred.lda2)/<span class="kw">NROW</span>(intSet),
+             <span class="kw">sum</span>(intSet$testSet ==<span class="st"> </span>intSet$pred.qda)/<span class="kw">NROW</span>(intSet),
+             <span class="kw">sum</span>(intSet$testSet ==<span class="st"> </span>intSet$pred.nnet)/<span class="kw">NROW</span>(intSet))
+accuracy =<span class="st"> </span><span class="kw">as.data.frame</span>(accuracy)
+accuracy$model =<span class="st"> </span><span class="kw">c</span>(<span class="st">&#39;lda&#39;</span>, <span class="st">&#39;lda2&#39;</span>, <span class="st">&#39;qda&#39;</span>, <span class="st">&#39;nnet&#39;</span>)
+
+<span class="kw">ggplot</span>(accuracy, <span class="kw">aes</span>(<span class="dt">x =</span> model, <span class="dt">y =</span> accuracy)) +<span class="st"> </span>
+<span class="st">  </span><span class="kw">geom_bar</span>(<span class="dt">stat =</span> <span class="st">&#39;identity&#39;</span>, <span class="dt">fill =</span> <span class="st">&#39;cyan4&#39;</span>)</code></pre>
+<p><img src="Model_performance_files/figure-html/unnamed-chunk-2-1.png" title="" alt="" width="480" /></p>
+</div>
+
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+$(document).ready(function () {
+  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+});
+
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

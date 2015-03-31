@@ -1,0 +1,66 @@
+---
+title: "Model performance"
+author: "Kay Dee"
+date: "Wednesday, March 11, 2015"
+output:
+  html_document:
+    highlight: espresso
+    self_contained: no
+    theme: united
+    toc: yes
+---
+
+***
+### Loading the data:
+```{r, cache=TRUE, message=FALSE, fig.width=8, fig.height=4}
+require(caret)
+require(dplyr)
+require(tidyr)
+load('input.RData')
+                       
+summary(eqcnx100adj)
+
+gridExtra::grid.arrange(ggplot(eqcnx100adj, aes(x = 1, y = DQShare, col = Top5)) + geom_boxplot(), ggplot(eqcnx100adj, aes(x = 1, y = TradeSize, col = Top5)) + geom_boxplot(), ggplot(eqcnx100adj, aes(x = 1, y = VWAPReturn, col = Top5)) + geom_boxplot(), ggplot(eqcnx100adj, aes(x = 1, y = Returns, col = Top5)) + geom_boxplot(), nrow = 2)
+
+eqcnx100adj[,-c(3:5)] %>%
+  #select(DQShare:VWAPReturn, Top5) %>%
+  gather(Features, Values, -c(Top5, Date, Ticker)) %>%
+  ggplot(aes(x = Features, y = Values, col = Top5)) + 
+  geom_boxplot() + facet_wrap( ~ Top5)
+```
+
+***
+### Performance of the models:
+```{r, echo=TRUE, cache=TRUE, message=FALSE, fig.height=5, fig.width=5, results='hide'}
+trainSet = eqcnx100adj[1:24400, -10]
+testSet = eqcnx100adj[24401:29000, -10]
+
+ldaModel = train(factor(Top5) ~. - Date - Ticker , data = trainSet, method = 'lda')
+pred.lda = predict(ldaModel, testSet)
+
+ldaModel2 = train(factor(Top5) ~ DQShare + Returns + TradeSize, data = trainSet, method = 'lda')
+pred.lda2 = predict(ldaModel2, testSet)
+
+qdaModel = train(factor(Top5) ~. - Date - Ticker, data = trainSet, method = 'qda')
+pred.qda = predict(qdaModel, testSet)
+
+nnetModel = train(factor(Top5) ~. - Date - Ticker, data = trainSet, method = 'nnet')
+pred.nnet = predict(nnetModel, testSet)
+
+results = cbind(testSet$Top5, as.character(pred.lda), as.character(pred.lda2),
+                as.character(pred.qda), as.character(pred.nnet))
+colnames(results) = c('testSet', 'pred.lda', 'pred.lda2', 'pred.qda', 'pred.nnet')
+results = as.data.frame(results)
+
+intSet = results[results$testSet=='Top5', ]
+accuracy = 100* c(sum(intSet$testSet == intSet$pred.lda)/NROW(intSet),
+             sum(intSet$testSet == intSet$pred.lda2)/NROW(intSet),
+             sum(intSet$testSet == intSet$pred.qda)/NROW(intSet),
+             sum(intSet$testSet == intSet$pred.nnet)/NROW(intSet))
+accuracy = as.data.frame(accuracy)
+accuracy$model = c('lda', 'lda2', 'qda', 'nnet')
+
+ggplot(accuracy, aes(x = model, y = accuracy)) + 
+  geom_bar(stat = 'identity', fill = 'cyan4')
+```
+
