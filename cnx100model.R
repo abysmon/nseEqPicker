@@ -7,16 +7,18 @@ nse.cnx100 = nse[ nse$Ticker %in% cnx100$Symbol, ]
 nse.cnx100$Date = as.POSIXct(strptime(nse.cnx100$Date, '%Y-%m-%d'))
 
 # ---- manual adjustment for stock splits ----
-# Stocks having splits
-# not done yet
+# works only for a single split
 splitstks = unique(nse.cnx100$Ticker[nse.cnx100$Returns < -20])
 splitstks = splitstks[order(splitstks)]
 
-dlf = nse.cnx100[ nse.cnx100$Ticker == 'DLF', ]
-dlf$Date[which.min(dlf)]
-dlf = dlf[order( dlf$Returns), ]
-head(dlf)
-dlf[ dlf$Date == '2014-08-19']
+sbin = nse.cnx100[ nse.cnx100$Ticker == 'SBIN', ]
+exidx = which.min(sbin$Returns)
+mx = round(sbin$PrevClose[exidx]/sbin$Close[exidx], digits = 0)
+sbin[1:exidx, 3:8] = sbin[1:exidx, 3:8]/mx # prices get divided
+sbin[1:exidx, c(9,12)] = sbin[1:exidx, c(9,12)]*mx # volumes get multiplied
+
+
+
 
 # ---- Rank the top stocks by Arithmetic returns on Closing prices ----
 Threshold = 10
