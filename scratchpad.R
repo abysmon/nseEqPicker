@@ -124,3 +124,23 @@ p2 <- p1 + geom_segment(data = df1, color = "blue",
 p2 + geom_segment(data = df1, colour = "green", size = 8, alpha = 0.25,
                   aes(x = group, xend = group, y = value1, yend = value2))
 
+
+
+
+#---- Gaussian copula ----
+require(mvtnorm)
+S <- matrix(c(1,.8,.8,1),2,2) #Correlation matrix
+AB <- rmvnorm(mean=c(0,0),sig=S,n=1000) #Our gaussian variables
+hist(AB[,1])
+hist(AB[,2])
+cor(AB[,1],AB[,2])
+
+U <- pnorm(AB) #Now U is uniform - check using hist(U[,1]) or hist(U[,2])
+hist(U[,1])
+hist(U[,2])
+cor(U[,1],U[,2])
+
+x <- qgamma(U[,1],2) #x is gamma distributed
+y <- qbeta(U[,2],1,2) #y is beta distributed
+plot(x,y)
+cor(x,y) #They correlate!

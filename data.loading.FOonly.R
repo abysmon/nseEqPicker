@@ -1,3 +1,57 @@
+# ---- Data update ----
+source('loadFCD.R', echo=F)
+
+fcd = read.csv('FO.only/FCD.splitadj.csv', as.is = T)
+fcd$DATE = as.POSIXct(strptime(fcd$DATE, '%Y-%m-%d'))
+
+
+start = as.Date(tail(fcd$Date,1))
+end = Sys.Date()-1 # adjust for till previous day run
+range = seq(start, end, '1 day')
+
+
+cmrange = toupper(as.character(strftime(range, "%d%b%Y")))
+cmlist = paste0('D:/dataset/nseCM/2015/cm', cmrange, 'bhav.csv')
+
+dqrange = toupper(as.character(strftime(range, "%d%m%Y")))
+dqlist = paste0('D:/dataset/nseDQ/2015/MTO_', dqrange, '.DAT')
+
+forange = toupper(as.character(strftime(range, "%d%b%Y")))
+folist = paste0('D:/dataset/nseFO/2015/fo', forange, 'bhav.csv')
+
+
+cmdata = do.call(rbind, lapply(cmlist, loadCM))
+dqdata = do.call(rbind, lapply(dqlist, loadDQ))
+fodata = do.call(rbind, lapply(folist, loadFO))
+
+
+fostk = unique(fcd$SYMBOL)
+cmdata = cmdata[ cmdata$SYMBOL %in% fostk, ]
+dqdata = dqdata[ dqdata$SYMBOL %in% fostk, ]
+fodata = fodata[ fodata$SYMBOL %in% fostk, ]
+
+
+fcd.recent = merge(cmdata, dqdata, by = c("DATE","SYMBOL"), all = F)
+all.equal(fcd.recent$TOTTRDQTY, fcd.recent$TradedQ)
+fcd.recent = fcd.recent[,-c(3,13,14,16)]
+fcd.recent = merge(fcd.recent, fodata, by = c("DATE","SYMBOL"), all = F)
+fcd.recent$arReturns = (fcd.recent$CLOSE/fcd.recent$PREVCLOSE-1)*100
+
+# check for equity splits
+fcd.recent[fcd.recent$arReturns < -20, c(1,2,22)]
+
+Threshold = 10
+fcd.recent = transform(fcd.recent, Rank = ave(arReturns, DATE, FUN = function(x) rank(-x, ties.method = "first")))
+fcd.recent$TopPick = ifelse(fcd.recent$Rank < (Threshold+1), "Top", "Others")
+
+
+fcd = rbind(fcd, fcd.recent)
+fcd = fcd[order(fcd$DATE, fcd$Rank), ]
+write.csv(fcd, file = 'FO.only/FCD.splitadjx.csv', row.names = F)
+
+# clean up
+# rm(start, end, range, cmrange, cmlist, cmdata, dqrange, dqlist, dqdata, forange, folist, fodata, fostk, Threshold)
+
 # ---- Equity 2014-15 ----
 
 cmlist = c(list.files('D:/dataset/nseCM/2014/', '^cm', full.names = T), 
