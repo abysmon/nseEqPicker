@@ -4,11 +4,20 @@ All rights reserved. No part of this codebase repository may be reproduced, dist
 
 
 Concept - Abysmon
+
 Design - Abysmon
+
 Development - Abysmon
+
 Quality Assurance - Abysmon
+
 Documentation - Abysmon
+
 Branding - Abysmon
+
 Public Relations - Abysmon
+
 Help Desk - Abysmon
+
 Catering - Abysmon
+
